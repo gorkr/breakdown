@@ -1,0 +1,55 @@
+body{
+    min-height: 600px;
+    min-width: 650px;
+    /*border: solid 1em black;*/
+    margin: 1em;
+    background: url(body.jpg);/*后期改成图片*/
+
+}
+
+.ball{
+    border-radius: 50%;
+
+}
+
+#game_area {
+    margin: 0 auto;
+    text-align: center;
+    /*background: snow;*/
+    position: relative;
+    border: 5px groove #87CEFA;/*边框*/
+    opacity: 0.9;
+
+}
+
+
+
+
+#block_area{
+    width: 650px;
+    height: 600px;
+    position: absolute;
+
+}
+
+#bar{
+    width: 40px;
+    height: 10px;
+    background: cornflowerblue;
+    position: absolute;
+    left: 300px;
+    top: 580px;
+
+}
+div{
+    border-radius: 15px;
+}
+#board{
+    position: relative;
+    float: left;
+    text-align: right;
+    color: snow;
+    font-size: 105%;
+
+    left: -340px;
+}

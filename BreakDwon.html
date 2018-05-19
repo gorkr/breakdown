@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BreakDown!</title>
+    <link href="BreakDown.css" media="all" rel="stylesheet" type="text/css" />
+</head>
+<body id="page">
+    <div id="game_area">
+        <div id="board">
+            <p>click the bar, then you can move the bar.</p>
+            <p>press space to launch the ball!</p>
+        </div>
+       <section id="block_area">
+       </section>
+       <section class="bar_area">
+            <div id="bar"></div>
+       </section>
+    </div>
+    <script>
+        /*
+        ID: 288150
+        name: Zhang xinyu
+        :)
+        */
+
+        /*代码中仍存在的问题：
+        disadvantages in the code:
+        1. brick 变量 和 block 变量意义相同，，，由于前期变量取名成block 没有改
+        1. variable brick and variable block has the same meaning. even some spelling errors like "creat" in some variable;
+        2. 不够模块化。 不能很好地处理各个模块之间的独立性。
+        2. Not modular enough. The independence of each module cannot be handled well.
+         */
+
+        start_game = false;
+        var lose_img = "url(lose.jpeg)";
+        var win_img = "url(win.jpeg)";
+        var bar_width = 40;
+        var bar_height = 10;
+        var game_width = 650;
+        var game_height = 600;
+        var brick_width = 60;
+        var brick_height = 30;
+        var ball_width = 20;
+        var ball_height = 20;
+        var page = document.getElementById("page");  //it is mainly used for changing background.
+        var block_area = document.getElementById("block_area");
+        var game_area = document.getElementById("game_area");
+        var blocks = document.getElementsByClassName('block');
+        var bar = document.getElementById("bar");
+        var brick_border_y = 5;
+        var brick_border_x = 4;
+        var ball_size = 20;
+        var click_x;
+
+
+//在bar正上方创造小球========================================================================================
+        // create a ball above bar:
+
+        function create_ball(ball_size, game_area, color){
+            var ball = document.createElement("div");
+            ball.className = "ball";
+            ball.style.width = ball.style.height = ball_size + "px";
+            ball.style.background = color;
+            ball.style.position = "absolute";
+            ball.style.left = bar.offsetLeft + bar_width/2 - ball_size/2+"px";
+            ball.style.top = game_height-2 * ball_size+"px";
+            game_area.appendChild(ball);
+        }
+        create_ball(ball_size, game_area, "black");
+
+
+//生成砖块==========================================================================================
+        // create bricks:
+
+        function give_brick_color(){
+            var bricks_color = ["red", "green", "blue", "black", "grey",  "pink", "purple", "rosybrown", "brown", "yellow"];
+            for(var i=0;i<blocks.length;i++) {
+                var j = parseInt(Math.random()*10);
+                blocks[i].style.background = bricks_color[j];
+            }
+
+        }
+
+        function creat_bricks_area(rows, cols, brick_width, brick_height, brick_border_y, brick_border_x, block_area){
+            //create bricks randomly.
+            for(var i=0; i<rows; i++){
+                for(var j=0; j<cols; j++){
+                    if(Math.random()*10>3){
+                        var brick = document.createElement("div");
+                        brick.style.position = "absolute";
+                        brick.style.top = (brick_border_x + i*(brick_height+brick_border_y)) + "px";// brick_borde_   means the gap between the bricks.
+                        brick.style.left = (brick_border_x + j*(brick_width+brick_border_x)) + "px";
+                        brick.style.width = brick_width + "px";
+                        brick.style.height = brick_height + "px";
+                        brick.className = "block";
+                        block_area.appendChild(brick);
+                    }
+                }
+            }
+            give_brick_color();
+        }
+        creat_bricks_area(8, 10, brick_width, brick_height, brick_border_y, brick_border_x, block_area);
+
+
+//生成一定大小的游戏区域=================================================================================
+        //generate a certain size of game area.
+        function creat_game_area(game_width, game_height){
+            var game_area = document.getElementById("game_area");
+            game_area.style.width = game_width + "px";
+            game_area.style.height = game_height + "px";
+        }
+        creat_game_area(game_width, game_height);
+
+
+        var my_ball = document.getElementsByClassName("ball");
+
+
+//奖励区域============================================================================================
+        // the code write for bonus
+        function bonus(color){
+            if(color === "green") {
+                //green item bonus
+                if (bar_width < game_width / 2){
+                    bar_width += 10;
+                    bar.style.width = bar_width + "px";
+                }
+            }else if (color === "red") {
+                //red item bonus
+                if (bar_width > ball_size / 2) {
+                    bar_width -= 10;
+                    bar.style.width = bar_width + "px";
+                }
+            } else {
+                //blue item bonus
+                create_ball(ball_size, game_area, "blue");
+            }
+        }
+
+        function creat_bouns_block(x, y, color){
+            var bouns_block = document.createElement("div");
+            bouns_block.style.background = color;
+            bouns_block.style.left = x+brick_width/2+"px";
+            bouns_block.style.top = y+"px";
+            bouns_block.style.width = bouns_block.style.height = bar_height+"px";
+            bouns_block.style.position = "absolute";
+            game_area.appendChild(bouns_block);
+            return bouns_block;
+        }
+
+        function fall_bouns(block, move_num, bar){
+            var y = block.offsetTop;
+            var x = block.offsetLeft;
+            var fall = setInterval(function(){
+                    y += move_num;
+                    block.style.top = y + "px";
+                    if(bar.offsetLeft-bar_height<=x&&x<=bar.offsetLeft+bar_width&&y+bar_height>=bar.offsetTop&&bar_height+y<=game_height){
+                        //这条if代表 bar接住了bonus_block//the mean of this "if" is got the bonus, the bar catch the bonus.
+                        clearInterval(fall);
+                        block.parentNode.removeChild(block);
+                        bonus(block.style.background);
+                    }else if(y>game_height-bar_height){
+                        clearInterval(fall);
+                        block.parentNode.removeChild(block);
+                        }
+                },10)
+        }
+
+        //使撞到的砖块消失， 并调用奖励函数。
+        //clear the hited bricks, call the function of bonus
+        function del_brick(brick){
+            if(brick.style.background ==="blue" ||brick.style.background ==="green" ||brick.style.background ==="red" )
+            fall_bouns(creat_bouns_block(brick.offsetLeft, brick.offsetTop, brick.style.background), 1.5, bar);
+            brick.parentNode.removeChild(brick);
+
+        }
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        //what's kind of collision between brick and ball
+        function crash_brick_code(ball_x, ball_y, brick_x, brick_y) {
+            var std = ball_size/2;
+            var ball_right = ball_x+ball_size;
+            var brick_right = brick_x + brick_width;
+            var ball_bottom = ball_y + ball_size;
+            var brick_bottom = brick_y + brick_width;
+            if ((ball_x >= brick_x-std) && (ball_x + ball_width <= brick_x + brick_width+std) && (ball_y + ball_height <= brick_y + brick_height+std) && (ball_y >= brick_y-std)) {
+                if ((ball_right - brick_x >= -std && ball_right - brick_x <= std) || (ball_x - brick_right >= -std && ball_x - brick_right <= std)){
+                    return 3;
+                }else {
+                    return 1;
+                   }
+            }
+        }
+
+
+
+
+//游戏胜利和游戏失败
+        //win or los in the game
+        function win(blocks){
+            if(blocks.length===0) {
+                start_game = false;
+                //page.style.background = win_img;
+                alert("you win, refresh the brower and play again.");
+
+            }
+        }
+
+        function lose(my_ball){
+            if(my_ball.length===0){
+                start_game = false;
+                //page.style.background = lose_img;
+                alert("you lose, refresh the brower and play again.");
+            }
+
+        }
+
+        document.onkeydown=function(event){
+            //按下空格键发射小球
+            //press space to launch ball.
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            /*  尝试添加暂停功能   已删除
+            if(e && e.keyCode===27){
+                if(start_game===false){
+                    start_game=true;
+                }else{
+                    start_game=false;
+                }
+
+            }*/
+
+            if(e && e.keyCode===32){
+                start_game = true;
+            }
+        }
+
+        //使bar相对移动
+
+        bar.onclick = function (event){
+            //点击bar得到鼠标的初始位置 click on bar, then get the coordinate of the mouse, save it.
+            this.style.background="black";
+            click_x = event.clientX;//得到开始游戏时鼠标点击位置
+
+        };
+
+        document.onmousemove=function (event){
+                var bar=document.getElementById("bar");
+                bar_x = event.clientX - click_x + game_width/2;//通过计算和初始化位置的差值，得到相对移动的距离 // calculate ,and get the realation move
+                if(bar_x>0&&bar_x<(game_width-bar_width)){
+                    bar.style.left=bar_x+"px";
+            }
+
+        };
+
+
+
+        ball_move_arr_left = [2,2,3,4,3,2,1,2,4,3,4,2,3,2,2,2,2,2,2,2,2];//两个数组代表小球每yizhen的移动  each element respents a speed.
+        ball_move_arr_top = [2,2,3,4,3,2,1,2,4,3,4,2,3,2,2,2,2,2,2,2,2];
+        unchange_ball_move_arr_left = [2,2,3,4,3,2,1,2,4,3,4,2,3,2,2,2,2,2,2,2,2];//保证基数
+
+//更改这咯++++++++++++++++++++++++++++++++++++++++++++++++++++++  大改！！！
+        //this code area is terirble
+        setInterval(function(){
+            if(start_game){
+                for(var i=0;i<my_ball.length;i++){
+                    var pos_x = my_ball[i].offsetLeft;
+                    var pos_y = my_ball[i].offsetTop;
+                    var ball_x_center = pos_x + ball_size/2;  //计算出球心位置 the center of a ball
+                    var bar_x_center = pos_x + bar_width/2;
+
+                    pos_x += -ball_move_arr_left[i];
+                    pos_y += -ball_move_arr_top[i];
+                    if(pos_x+ball_width>=game_width){
+                        ball_move_arr_left[i] = -ball_move_arr_left[i];
+                    }else if(pos_x<=0){
+                        ball_move_arr_left[i] = -ball_move_arr_left[i];
+                    }
+                    if(pos_y+ball_height>=game_height){
+                        my_ball[i].parentNode.removeChild(my_ball[i]);//将失去的小球从dom中删除    remove the missed ball
+                        ball_move_arr_left.splice(i,1);               //并把相应的记录小球移动的数组元素删除  remove the ball's speed from array
+                        ball_move_arr_top.splice(i,1);
+                        break;
+                    }else if(pos_y<=0){
+                        ball_move_arr_top[i] = -ball_move_arr_top[i];
+                    }else if(pos_x+ball_size>=bar_x&&pos_x<=bar_x+bar_width&&(bar.offsetTop-pos_y<=bar_height+5&&bar.offsetTop-pos_y>0)){//触碰的条件 the ball touched the bar
+                        ball_move_arr_left[i] = Math.abs(ball_x_center - bar_x_center)/(bar_width/2)*2*unchange_ball_move_arr_left[i]*ball_move_arr_left[i]/Math.abs(ball_move_arr_left[i]);
+                        //farther from the center, greater to the Angle.
+                        ball_move_arr_top[i]= -ball_move_arr_top[i];
+                    }
+                    for(var j=0;j<blocks.length;j++) {
+                        var crash_code = crash_brick_code(pos_x, pos_y, blocks[j].offsetLeft, blocks[j].offsetTop);
+                        switch(crash_code){
+                            case 1: ball_move_arr_top[i] = -ball_move_arr_top[i];del_brick(blocks[j]);break;
+                            //case 2: ball_move_arr_left[i] = -ball_move_arr_left[i];ball_move_arr_top[i] = -ball_move_arr_top[i];del_brick(blocks[j]);break;
+                            case 3: ball_move_arr_left[i] = -ball_move_arr_left[i];del_brick(blocks[j]);break;
+                        }
+                    }
+                    //crash_bar(pos_x, pos_y, bar.offsetLeft, bar.offsetTop, ball_move_arr_top[i]);
+                    if(my_ball.length!==0){
+                        my_ball[i].style.left = pos_x + "px";
+                        my_ball[i].style.top = pos_y + "px";
+                    }
+                    win(blocks);
+
+
+                }
+            }else{
+                my_ball[0].style.left = bar.offsetLeft + bar_width/2 - ball_size/2+"px";
+                my_ball[0].style.top = game_height-2*ball_size+"px";
+            }
+            lose(my_ball);
+
+        },10);
+
+
+/*
+        function random_color(div){
+            var r = Math.floor(Math.random()*256);
+            var g = Math.floor(Math.random()*256);
+            var b = Math.floor(Math.random()*256);
+            div.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
+        }
+
+*/
+
+
+    </script>
+</body>
+</html>
